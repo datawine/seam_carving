@@ -6,6 +6,13 @@ from calc_energy import *
 class SeamCarving():
     def __init__(self, img):
         self.img = img
+    
+    def get_energy(self, img):
+#        return getGrayL1Gradient(img)
+        return getRGBL1Gradient(img)
+#        return getRGBL2Gradient(img)
+#        return getRGBLaplacian(img)
+#        return getSaliency(img) + 2 * getGrayL1Gradient(img)
 
     def dp(self, energy_map):
         print("dping engergy map")
@@ -60,7 +67,7 @@ class SeamCarving():
 
         for i in range(d_col):
             print("deleting: " + str(i) + "of " + str(d_col) + "lines")
-            energy_map = energy(_img)
+            energy_map = self.get_energy(_img)
             dp_map = self.dp(energy_map)
             start_posi = np.argmin(dp_map[-1])
             seam = self.find_seam(dp_map, start_posi)
@@ -71,7 +78,7 @@ class SeamCarving():
         print(type(_img))
         for i in range(d_row):
             print("deleting: " + str(i) + "of " + str(d_row) + "lines")
-            energy_map = energy(_img)
+            energy_map = self.get_energy(_img)
             dp_map = self.dp(energy_map)
             start_posi = np.argmin(dp_map[-1])
             seam = self.find_seam(dp_map, start_posi)
@@ -94,7 +101,7 @@ class SeamCarving():
         seam_list = []
         for i in range(d_col):
             print("deleting: " + str(i) + "of " + str(d_col) + "lines")
-            energy_map = energy(_img)
+            energy_map = self.get_energy(_img)
             dp_map = self.dp(energy_map)
             start_posi = np.argmin(dp_map[-1])
             seam = self.find_seam(dp_map, start_posi)
@@ -105,6 +112,25 @@ class SeamCarving():
         for i in range(len(seam_list)):
             _img = self.add_single_seam(_img, seam_list[i])
             seam_list = self.update_seam_list(seam_list, i)
+
+        _img_2 = np.rot90(_img).copy()
+        seam_list = []
+        for i in range(d_row):
+            print("deleting: " + str(i) + "of " + str(d_row) + "lines")
+            energy_map = self.get_energy(_img_2)
+            dp_map = self.dp(energy_map)
+            start_posi = np.argmin(dp_map[-1])
+            seam = self.find_seam(dp_map, start_posi)
+            seam_list.append(seam)
+            _img_2 = self.delete_single_seam(_img_2, seam)
+        
+        _img = np.rot90(_img).copy()
+        for i in range(len(seam_list)):
+            _img = self.add_single_seam(_img, seam_list[i])
+            seam_list = self.update_seam_list(seam_list, i)
+
+        _img = np.rot90(_img, 3).copy()
+        return _img
 
     def delete_single_seam(self, img, seam):
         r, c, b = img.shape
@@ -117,15 +143,16 @@ class SeamCarving():
         return output
 
     def add_single_seam(self, img, seam):
+        print("adding seam")
         r, c, b = img.shape
         output = np.zeros((r, c + 1, b), np.uint8)
 
         for _c, _r in reversed(seam):
             for _b in range(b):
                 if _c == 0:
-                    insert_seam = np.average(img[_r, _c:_c + 2, b])
+                    insert_seam = np.average(img[_r, _c:_c + 2, _b])
                 else:
-                    insert_seam = np.average(img[_r, _c - 1:_c + 1, b])
+                    insert_seam = np.average(img[_r, _c - 1:_c + 1, _b])
                 output[_r, :_c, _b] = img[_r, :_c, _b]
                 output[_r, _c, _b] = insert_seam
                 output[_r, _c + 1:, _b] = img[_r, _c:, _b]
@@ -135,6 +162,6 @@ class SeamCarving():
         cur_seam = seam_list[index]
         for i in range(index + 1, len(seam_list)):
             for j in range(len(cur_seam)):
-                if cur_seam[j] <= seam_list[i][j]:
-                    seam_list[i][j] = seam_list[i][j] + 2
+                if cur_seam[j][0] <= seam_list[i][j][0]:
+                    seam_list[i][j][0] = seam_list[i][j][0] + 2
         return seam_list
