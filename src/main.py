@@ -4,7 +4,8 @@ from seam_carving import *
 import cv2
 import numpy as np
 
-for i in range(1, 7):
+
+for i in range(6, 7):
     if i == 2:
         img = cv2.imread("../images/2.png")
     else:
@@ -14,11 +15,23 @@ for i in range(1, 7):
     seam_instance = SeamCarving(img)
     output = seam_instance.seam_delete(int(img.shape[0] * 0.7), int(img.shape[1] * 0.7))
     if i == 2:
-        cv2.imwrite("../res/rgbL1/delete_2.png", output)    
+        cv2.imwrite("../res/rgbL2/delete_2.png", output)    
     else:
-        cv2.imwrite("../res/rgbL1/delete_" + str(i) + ".jpg", output)
+        cv2.imwrite("../res/rgbL2/delete_" + str(i) + ".jpg", output)
     output = seam_instance.seam_insert(int(img.shape[0] * 1.3), int(img.shape[1] * 1.3))
     if i == 2:
-        cv2.imwrite("../res/rgbL1/insert_2.png", output)    
+        cv2.imwrite("../res/rgbL2/insert_2.png", output)    
     else:
-        cv2.imwrite("../res/rgbL1/insert_" + str(i) + ".jpg", output)
+        cv2.imwrite("../res/rgbL2/insert_" + str(i) + ".jpg", output)
+
+
+'''
+img = cv2.imread("../images/1.jpg")
+msk = cv2.imread("../images/mask.jpg")
+
+seam_instance = SeamCarving(img)
+output = seam_instance.seam_delete_with_mask(int(img.shape[0] * 0.7), \
+                int(img.shape[1] * 0.7), msk)
+
+cv2.imwrite("../res/mask_delete/1.jpg", output)
+'''

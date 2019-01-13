@@ -39,3 +39,13 @@ def getSaliency(img):
     # computation
     saliency_map = sm.SMGetSM(img)
     return saliency_map
+
+def calcEntropy(img):
+    #hist,_ = np.histogram(img, np.arange(0, 256), normed=True)
+    hist = cv2.calcHist([img],[0],None,[256],[0,256])
+    hist = hist.ravel()/hist.sum()
+    #logs = np.nan_to_num(np.log2(hist))
+    logs = np.log2(hist+0.00001)
+    #hist_loghist = hist * logs
+    entropy = -1 * (hist*logs).sum()
+    return entropy

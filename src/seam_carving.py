@@ -9,10 +9,21 @@ class SeamCarving():
     
     def get_energy(self, img):
 #        return getGrayL1Gradient(img)
-        return getRGBL1Gradient(img)
-#        return getRGBL2Gradient(img)
+#        return getRGBL1Gradient(img)
+        return getRGBL2Gradient(img)
 #        return getRGBLaplacian(img)
 #        return getSaliency(img) + 2 * getGrayL1Gradient(img)
+
+    def get_energy_with_mask(self, img, msk):
+        cnt = 0
+        raw_energy = self.get_energy(img)
+        for i in range(raw_energy.shape[0]):
+            for j in range(raw_energy.shape[1]):
+                if msk[i][j][0] != 255 and msk[i][j][2] != 255:
+                    raw_energy[i][j] = raw_energy[i][j] - 10000000
+                    cnt = cnt + 1
+        print(cnt)
+        return raw_energy
 
     def dp(self, energy_map):
         print("dping engergy map")
@@ -34,7 +45,6 @@ class SeamCarving():
         return dp_map
 
     def find_seam(self, dp_map, start_posi, mask=[]):
-        print("find seam")
         r, c = dp_map.shape
         _c = start_posi
         seam = []
@@ -128,6 +138,45 @@ class SeamCarving():
         for i in range(len(seam_list)):
             _img = self.add_single_seam(_img, seam_list[i])
             seam_list = self.update_seam_list(seam_list, i)
+
+        _img = np.rot90(_img, 3).copy()
+        return _img
+
+    def seam_delete_with_mask(self, _row, _col, msk):
+        self.col = _col
+        self.row = _row
+        row, col = self.img.shape[:2]
+        d_row = abs(self.row - row)
+        d_col = abs(self.col - col)
+        print(d_row, d_col)
+
+        _img = np.copy(self.img)
+        _msk = np.copy(msk)
+
+        for i in range(d_col):
+            print("deleting: " + str(i) + "of " + str(d_col) + "lines")
+            energy_map = self.get_energy_with_mask(_img, _msk)
+            dp_map = self.dp(energy_map)
+            start_posi = np.argmin(dp_map[-1])
+            print("seam val: " + str(dp_map[-1][start_posi]))
+            print("start_posi: " + str(start_posi))
+            cv2.imwrite("../res/mask_delete" + str(i) + ".jpg", _msk)
+            seam = self.find_seam(dp_map, start_posi)
+#            draw_seam(_img, seam, interactive=False)
+            _img = self.delete_single_seam(_img, seam)
+            _msk = self.delete_single_seam(_msk, seam)
+
+        _img = np.rot90(_img).copy()
+        _msk = np.rot90(_msk).copy()
+        for i in range(d_row):
+            print("deleting: " + str(i) + "of " + str(d_row) + "lines")
+            energy_map = self.get_energy_with_mask(_img, _msk)
+            dp_map = self.dp(energy_map)
+            start_posi = np.argmin(dp_map[-1])
+            seam = self.find_seam(dp_map, start_posi)
+#            draw_seam(_img, seam, interactive=False)
+            _img = self.delete_single_seam(_img, seam)
+            _msk = self.delete_single_seam(_msk, seam)
 
         _img = np.rot90(_img, 3).copy()
         return _img
